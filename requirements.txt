@@ -1,0 +1,34 @@
+# ===============================
+# Project Type: Static Website
+# Hosting Target: GitHub Pages
+# ===============================
+
+# This project uses only client-side technologies.
+# No backend or server-side runtime is required.
+
+HTML5
+CSS3
+JavaScript (ES5/ES6)
+
+# JavaScript Libraries (included locally)
+jQuery >= 1.7.1
+Jscex Core
+Jscex Async
+Jscex BuilderBase
+Jscex Parser
+Jscex JIT
+Jscex Async Powerpack
+
+# Canvas & Animation
+HTML5 Canvas API
+
+# Browser Requirements
+Modern Web Browser (Chrome / Firefox / Edge / Brave)
+
+# Hosting
+GitHub Pages (Static Hosting)
+
+# ===============================
+# NOTE:
+# No npm, pip, node, python, or server dependencies required.
+# ===============================
