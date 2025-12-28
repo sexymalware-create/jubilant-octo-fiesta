@@ -1,14 +1,11 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta charset="UTF-8">
 <title>HBD love</title>
 
-<!-- CSS (ROOT) -->
-<link rel="stylesheet" type="text/css" href="default.css" />
+<link rel="stylesheet" href="default.css">
 
-<!-- JS (ROOT) -->
 <script src="jquery.min.js"></script>
 <script src="jscex.min.js"></script>
 <script src="jscex-parser.js"></script>
@@ -20,9 +17,11 @@
 <script src="love.js"></script>
 
 <script>
-function playAudio(){
-    var a = document.getElementById("myAudio");
-    if(a) a.play();
+function playAudio() {
+  var audio = document.getElementById("myAudio");
+  if (audio && audio.paused) {
+    audio.play().catch(function(){});
+  }
 }
 </script>
 </head>
@@ -30,23 +29,23 @@ function playAudio(){
 <body>
 <div id="main">
 
-<audio id="myAudio">
-    <source src="aud.mp3" type="audio/mp3" />
+<audio id="myAudio" preload="auto">
+  <source src="aud.mp3" type="audio/mpeg">
 </audio>
 
 <div id="wrap">
-    <div id="text">
-        <div id="code">
-            <span class="say">Hey you 💞</span><br/>
-            <span class="say">Happy Birthday 🎈</span><br/>
-            <span class="say">May God bless you 🍀</span><br/>
-            <span class="say">And give u many happiness 💕</span><br/>
-            <span class="say">Just saying... you're pretty awesome ❤️</span><br/>
-            <span class="say">Hope u have a great day ❤️😘</span><br/>
-        </div>
+  <div id="text">
+    <div id="code">
+      <span class="say">Hey you 💞</span><br>
+      <span class="say">Happy Birthday 🎈</span><br>
+      <span class="say">May God bless you 🍀</span><br>
+      <span class="say">And give u many happiness 💕</span><br>
+      <span class="say">Just saying... you're pretty awesome ❤️</span><br>
+      <span class="say">Hope u have a great day ❤️😘</span><br>
     </div>
+  </div>
 
-    <canvas id="canvas" width="1100" height="680"></canvas>
+  <canvas id="canvas" width="1100" height="680"></canvas>
 </div>
 </div>
 
@@ -54,85 +53,127 @@ function playAudio(){
 (function () {
 
 var canvas = $("#canvas");
-var ctx = canvas[0].getContext("2d");
+if (!canvas[0].getContext) return;
+
 var width = canvas.width();
 var height = canvas.height();
+canvas.attr("width", width);
+canvas.attr("height", height);
 
+/* ✅ HYBRID TREE CONFIG
+   - full branch data (no black screen)
+   - but animation speed tuned for clean look
+*/
 var opts = {
-    seed: { x: width/2-20, color:"rgb(190,26,37)", scale:2 },
-    branch: [[535,680,570,250,500,200,30,100]],
-    bloom: { num:700, width:1080, height:650 },
-    footer: { width:1200, height:5, speed:10 }
+  seed: {
+    x: width / 2 - 20,
+    color: "rgb(190,26,37)",
+    scale: 2
+  },
+  branch: [
+    [535,680,570,250,500,200,30,100,[
+      [540,500,455,417,340,400,13,100],
+      [550,445,600,356,680,345,12,100],
+      [539,281,537,248,534,217,3,40],
+      [546,397,413,247,328,244,9,80],
+      [546,357,608,252,678,221,6,100]
+    ]]
+  ],
+  bloom: {
+    num: 650,          // thoda kam = clean heart
+    width: 1080,
+    height: 650
+  },
+  footer: {
+    width: 1200,
+    height: 5,
+    speed: 10
+  }
 };
 
 var tree = new Tree(canvas[0], width, height, opts);
 var seed = tree.seed;
+var foot = tree.footer;
 var hold = 1;
 
 /* CLICK TO START */
-canvas.click(function(e){
-    playAudio();
-    var o = canvas.offset();
-    var x = e.pageX - o.left;
-    var y = e.pageY - o.top;
-    if(seed.hover(x,y)){
-        hold = 0;
-        canvas.unbind("click mousemove");
-    }
+canvas.on("click", function(e){
+  playAudio();
+  var o = canvas.offset();
+  var x = e.pageX - o.left;
+  var y = e.pageY - o.top;
+  if (seed.hover(x, y)) {
+    hold = 0;
+    canvas.off("click mousemove");
+  }
+}).on("mousemove", function(e){
+  var o = canvas.offset();
+  canvas.toggleClass(
+    "hand",
+    seed.hover(e.pageX - o.left, e.pageY - o.top)
+  );
 });
 
 /* SEED */
-var seedAnimate = eval(Jscex.compile("async", function(){
-    seed.draw();
-    while(hold) $await(Jscex.Async.sleep(10));
-    while(seed.canScale()){
-        seed.scale(0.95);
-        $await(Jscex.Async.sleep(10));
-    }
+var seedAnimate = eval(Jscex.compile("async", function () {
+  seed.draw();
+  while (hold) {
+    $await(Jscex.Async.sleep(10));
+  }
+  while (seed.canScale()) {
+    seed.scale(0.95);
+    $await(Jscex.Async.sleep(10));
+  }
+  while (seed.canMove()) {
+    seed.move(0, 2);
+    foot.draw();
+    $await(Jscex.Async.sleep(10));
+  }
 }));
 
 /* TREE */
-var growAnimate = eval(Jscex.compile("async", function(){
-    while(tree.canGrow()){
-        tree.grow();
-        $await(Jscex.Async.sleep(10));
-    }
+var growAnimate = eval(Jscex.compile("async", function () {
+  while (tree.canGrow()) {
+    tree.grow();
+    $await(Jscex.Async.sleep(10));
+  }
 }));
 
 /* FLOWERS */
-var flowAnimate = eval(Jscex.compile("async", function(){
-    while(tree.canFlower()){
-        tree.flower(2);
-        $await(Jscex.Async.sleep(10));
-    }
+var flowAnimate = eval(Jscex.compile("async", function () {
+  while (tree.canFlower()) {
+    tree.flower(2);
+    $await(Jscex.Async.sleep(10));
+  }
 }));
 
-/* FINAL PNG AFTER TREE */
-var finalPNG = eval(Jscex.compile("async", function(){
-    $await(Jscex.Async.sleep(500));
-    canvas.parent().css(
-        "background",
-        "url(" + tree.toDataURL("image/png") + ") center/contain no-repeat"
-    );
+/* FINAL PNG SNAPSHOT */
+var finalSnapshot = eval(Jscex.compile("async", function () {
+  $await(Jscex.Async.sleep(400));
+  canvas.parent().css(
+    "background",
+    "url(" + tree.toDataURL("image/png") + ") center/contain no-repeat"
+  );
 }));
 
 /* TEXT */
-var textAnimate = eval(Jscex.compile("async", function(){
-    $("#code").show().typewriter();
+var textAnimate = eval(Jscex.compile("async", function () {
+  $("#code").show().typewriter();
 }));
 
-/* RUN */
-var run = eval(Jscex.compile("async", function(){
-    $await(seedAnimate());
-    $await(growAnimate());
-    $await(flowAnimate());
-    $await(finalPNG());
-    textAnimate().start();
+/* RUN ORDER */
+var runAsync = eval(Jscex.compile("async", function () {
+  $await(seedAnimate());
+  $await(growAnimate());
+  $await(flowAnimate());
+  $await(finalSnapshot());
+  textAnimate().start();
 }));
 
-run.start();
+runAsync().start();
 
 })();
 </script>
+
 </body>
 </html>
